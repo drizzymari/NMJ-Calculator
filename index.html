@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NMJ - Plating Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --warning: #fbbf24;
+      --success: #4ade80;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    }
+
+    * { box-sizing: border-box; font-family: var(--font-sans); margin: 0; padding: 0; }
+    body { background: var(--bg-dark); color: var(--text-main); padding: 1.5rem; }
+
+    .header { text-align: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem; }
+    .header h1 { font-size: 1.8rem; color: var(--accent); letter-spacing: 1px; font-weight: 700; }
+    .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.3rem; }
+
+    .protocol-toggle { display: flex; justify-content: center; gap: 0.5rem; background: #0f172a; border: 1px solid var(--card-border); border-radius: 8px; padding: 0.3rem; margin: 1rem auto 0 auto; max-width: 400px; }
+    .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 0.6rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; margin: 0; }
+    .toggle-btn.active { background: var(--accent); color: #0f172a; }
+
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1200px; margin: 1.5rem auto 0 auto; }
+    @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
+    
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.2rem; }
+    .card h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; font-weight: 600; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .form-group { margin-bottom: 0.8rem; }
+    .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .form-group input { width: 100%; background: #0f172a; border: 1px solid var(--card-border); color: #fff; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.95rem; font-family: var(--font-mono); }
+    .form-group input:focus { outline: none; border-color: var(--accent); }
+
+    .results-group { background: #0f172a; border-radius: 8px; padding: 0.9rem; margin-bottom: 0.9rem; }
+    .results-group h3 { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric { display: flex; justify-content: space-between; margin-bottom: 0.35rem; font-size: 0.85rem; }
+    .metric span.label { color: var(--text-muted); }
+    .metric span.value { font-family: var(--font-mono); font-weight: 700; color: #fff; font-size: 0.95rem; }
+
+    .math-breakdown { background: #0b1329; border-left: 3px solid var(--accent); padding: 0.6rem; margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.78rem; color: #cbd5e1; white-space: pre-line; line-height: 1.4; }
+
+    .badge { padding: 0.6rem; border-radius: 6px; font-size: 0.8rem; line-height: 1.4; margin-top: 0.8rem; }
+    .badge-info { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); color: var(--accent); }
+    .badge-warn { background: rgba(251, 191, 36, 0.1); border: 1px solid var(--warning); color: var(--warning); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>NMJ</h1>
+    <p>Plating Calculator</p>
+    
+    <div class="protocol-toggle">
+      <button class="toggle-btn active" id="btnSkm" onclick="switchProtocol('skm')">Skeletal Muscle (SkM)</button>
+      <button class="toggle-btn" id="btnMn" onclick="switchProtocol('mn')">Motoneuron (MN)</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- INPUT PANEL -->
+    <div class="card">
+      <h2>1. Experimental Inputs</h2>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Number of Surfaces (Chambers)</label>
+          <input type="number" id="numSurfaces" value="10" oninput="calculate()">
+        </div>
+        <div class="form-group">
+          <label>Target Seeding Density (cells/mm²)</label>
+          <input type="number" id="density" value="50" oninput="calculate()">
+        </div>
+      </div>
+      
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Viable Cells Counted</label>
+          <input type="number" id="viableCells" value="120" oninput="calculate()">
+        </div>
+        <div class="form-group">
+          <label>Quadrants Counted</label>
+          <input type="number" id="quadrants" value="4" oninput="calculate()">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label id="dilutionLabel">Trypan DF (2.0 for 1:1 ratio)</label>
+          <input type="number" id="dilution" value="2.0" step="0.1" oninput="calculate()">
+        </div>
+        <div class="form-group">
+          <label>Initial Resuspension (mL)</label>
+          <input type="number" id="resuspension" value="0.5" step="0.05" oninput="calculate()">
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS PANEL -->
+    <div class="card">
+      <h2>2. Calculations & Math Breakdown</h2>
+
+      <div class="results-group">
+        <h3>Total Cells Needed</h3>
+        <div class="metric"><span class="label">Total Cells Required:</span><span class="value" id="resTotalNeeded">0 cells</span></div>
+        <div class="math-breakdown" id="mathTable4"></div>
+      </div>
+
+      <div class="results-group">
+        <h3>Cell Concentration & Yield</h3>
+        <div class="metric"><span class="label">Concentration:</span><span class="value" id="resConcentration">0 cells/mL</span></div>
+        <div class="metric"><span class="label">Total Viable Yield:</span><span class="value" id="resYield">0 cells</span></div>
+        <div class="math-breakdown" id="mathTable6"></div>
+      </div>
+
+      <div class="results-group">
+        <h3>Plating Volume Calculation</h3>
+        <div class="metric"><span class="label">Cells Needed / Chamber:</span><span class="value" id="resTargetCells">0 cells</span></div>
+        <div class="metric"><span class="label">Initial Plating Volume:</span><span class="value" id="resPlatingVol">0.00 µL</span></div>
+        <div class="math-breakdown" id="mathTable7"></div>
+      </div>
+
+      <div class="results-group">
+        <h3>Volume Adjustment Step</h3>
+        <div class="metric"><span class="label">Target Dispense Volume:</span><span class="value" id="resTargetDispense">10.0 µL</span></div>
+        <div class="metric"><span class="label">Volume to Add to Tube:</span><span class="value" id="resVolToAdd">0.00 µL</span></div>
+        <div class="metric"><span class="label">New Total Suspension:</span><span class="value" id="resNewTotalVol">0.000 mL</span></div>
+        <div class="math-breakdown" id="mathTable8"></div>
+      </div>
+
+      <div id="statusBadge" class="badge badge-info">Calculating...</div>
+    </div>
+  </div>
+
+  <script>
+    let activeProtocol = 'skm';
+
+    function switchProtocol(protocol) {
+      activeProtocol = protocol;
+      
+      const btnSkm = document.getElementById('btnSkm');
+      const btnMn = document.getElementById('btnMn');
+      const densityInput = document.getElementById('density');
+      const dilutionInput = document.getElementById('dilution');
+      const dilutionLabel = document.getElementById('dilutionLabel');
+
+      if (protocol === 'skm') {
+        btnSkm.classList.add('active');
+        btnMn.classList.remove('active');
+        densityInput.value = 50;
+        dilutionInput.value = 2.0;
+        dilutionLabel.innerText = "Trypan DF (2.0 for 1:1 ratio)";
+      } else {
+        btnMn.classList.add('active');
+        btnSkm.classList.remove('active');
+        densityInput.value = 1500;
+        dilutionInput.value = 4.0;
+        dilutionLabel.innerText = "Trypan DF (4.0 for 1:3 ratio)";
+      }
+
+      calculate();
+    }
+
+    function calculate() {
+      const numSurfaces = parseFloat(document.getElementById('numSurfaces').value) || 0;
+      const density = parseFloat(document.getElementById('density').value) || 0;
+      const viableCells = parseFloat(document.getElementById('viableCells').value) || 0;
+      const quadrants = parseFloat(document.getElementById('quadrants').value) || 1;
+      const dilution = parseFloat(document.getElementById('dilution').value) || 1;
+      const resuspension = parseFloat(document.getElementById('resuspension').value) || 0;
+      const surfaceArea = 50.0;
+
+      let minDensity, maxDensity, targetDispenseVolUl;
+
+      if (activeProtocol === 'skm') {
+        minDensity = 50;
+        maxDensity = 200;
+        targetDispenseVolUl = 10.0;
+      } else {
+        minDensity = 750;
+        maxDensity = 1500;
+        targetDispenseVolUl = 15.0;
+      }
+
+      // Density Range Check
+      const badge = document.getElementById('statusBadge');
+      if (density < minDensity || density > maxDensity) {
+        badge.className = 'badge badge-warn';
+        badge.innerHTML = `<strong>Density Warning:</strong> ${density} cells/mm² deviates from standard limits (${minDensity}-${maxDensity} cells/mm²).`;
+      } else {
+        badge.className = 'badge badge-info';
+        badge.innerHTML = `<strong>Status:</strong> Target density within validated limits (${minDensity}-${maxDensity} cells/mm²).`;
+      }
+
+      // Total Cells Needed
+      const cellsNeededPerChamber = density * surfaceArea;
+      const totalCellsNeeded = numSurfaces * cellsNeededPerChamber;
+
+      // Concentration & Total Yield
+      const cellsPerMl = (viableCells / quadrants) * dilution * 10000;
+      const totalViable = cellsPerMl * resuspension;
+
+      // Yield Sufficiency Check
+      if (totalViable < totalCellsNeeded && totalViable > 0) {
+        badge.className = 'badge badge-warn';
+        badge.innerHTML = `<strong>Yield Warning:</strong> Total yield (${totalViable.toLocaleString()}) is less than required (${totalCellsNeeded.toLocaleString()}). Consult supervisor to thaw additional vials.`;
+      }
+
+      // Plating Volume
+      const platingVolumeUl = cellsPerMl > 0 ? (cellsNeededPerChamber / cellsPerMl) * 1000 : 0;
+
+      // Volume Adjustment
+      let newTotalVolMl = resuspension;
+      let volToAddMl = 0;
+      let volToAddUl = 0;
+
+      if (platingVolumeUl > 0 && platingVolumeUl <= targetDispenseVolUl) {
+        newTotalVolMl = (targetDispenseVolUl / platingVolumeUl) * resuspension;
+        volToAddMl = newTotalVolMl - resuspension;
+        volToAddUl = volToAddMl * 1000;
+      }
+
+      // UI Metrics
+      document.getElementById('resTargetDispense').innerText = `${targetDispenseVolUl.toFixed(1)} µL`;
+      document.getElementById('resTotalNeeded').innerText = `${totalCellsNeeded.toLocaleString()} cells`;
+      document.getElementById('resConcentration').innerText = `${cellsPerMl.toLocaleString()} cells/mL`;
+      document.getElementById('resYield').innerText = `${totalViable.toLocaleString()} cells`;
+      document.getElementById('resTargetCells').innerText = `${cellsNeededPerChamber.toLocaleString()} cells`;
+      document.getElementById('resPlatingVol').innerText = `${platingVolumeUl.toFixed(2)} µL`;
+      document.getElementById('resVolToAdd').innerText = `${volToAddUl.toFixed(2)} µL`;
+      document.getElementById('resNewTotalVol').innerText = `${newTotalVolMl.toFixed(3)} mL`;
+
+      // Live Explicit Math Explanations
+      document.getElementById('mathTable4').innerText = 
+        `[${numSurfaces} surfaces] × [50 mm²] × [${density} cells/mm²] = ${totalCellsNeeded.toLocaleString()} total cells needed`;
+
+      document.getElementById('mathTable6').innerText = 
+        `([${viableCells} cells] ÷ [${quadrants} quads]) × [${dilution} DF] × 10,000 = ${cellsPerMl.toLocaleString()} cells/mL\n` +
+        `[${cellsPerMl.toLocaleString()} cells/mL] × [${resuspension} mL] = ${totalViable.toLocaleString()} total cells`;
+
+      document.getElementById('mathTable7').innerText = 
+        `[${density} cells/mm²] × [50 mm²] = ${cellsNeededPerChamber.toLocaleString()} cells needed per chamber\n` +
+        `([${cellsNeededPerChamber.toLocaleString()} cells] ÷ [${cellsPerMl.toLocaleString()} cells/mL]) × 1,000 µL = ${platingVolumeUl.toFixed(2)} µL`;
+
+      if (platingVolumeUl <= targetDispenseVolUl) {
+        document.getElementById('mathTable8').innerText = 
+          `(${targetDispenseVolUl} µL ÷ [${platingVolumeUl.toFixed(2)} µL]) × [${resuspension} mL] = ${newTotalVolMl.toFixed(3)} mL (New Total)\n` +
+          `[${newTotalVolMl.toFixed(3)} mL] - [${resuspension} mL] = ${volToAddMl.toFixed(3)} mL (${volToAddUl.toFixed(2)} µL media to add)`;
+      } else {
+        document.getElementById('mathTable8').innerText = 
+          `Plating volume (${platingVolumeUl.toFixed(2)} µL) > ${targetDispenseVolUl} µL.\n` +
+          `Action: Re-centrifuge cells, remove supernatant, and resuspend directly in target total volume.`;
+      }
+    }
+
+    calculate();
+  </script>
+</body>
+</html>
